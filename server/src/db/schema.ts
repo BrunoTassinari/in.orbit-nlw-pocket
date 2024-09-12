@@ -1,5 +1,5 @@
-import { pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core'
-import { createId } from '@paralleldrive/cuid2'
+import { pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core';
+import { createId } from '@paralleldrive/cuid2';
 
 export const goals = pgTable('goals', {
   id: text('id')
@@ -10,7 +10,7 @@ export const goals = pgTable('goals', {
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
-})
+});
 
 export const goalCompletions = pgTable('goal_completions', {
   id: text('id')
@@ -22,4 +22,4 @@ export const goalCompletions = pgTable('goal_completions', {
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
-})
+});
