@@ -5,14 +5,32 @@ import { InOrbitIcon } from './in-orbit-icon';
 import { Progress, ProgressIndicator } from './ui/progress-bar';
 import { Separator } from './ui/separator';
 import { OutlineButton } from './ui/outline-button';
+import { useQuery } from '@tanstack/react-query';
+import { GetSummary } from '../http/get-summary';
+import dayjs from 'dayjs';
 
 export const Summary = () => {
+  const { data } = useQuery({
+    queryKey: ['summary'],
+    queryFn: GetSummary,
+    staleTime: 1000 * 60,
+  });
+
+  if (!data) return null;
+
+  const firstDayOfWeek = dayjs().startOf('week').format('D MMM');
+  const lastDayOfWeek = dayjs().endOf('week').format('D MMM');
+
+  const completedPercentage = (data?.completed * 100) / data?.total;
+
   return (
     <div className="py-10 max-w-[480px] px-5 mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <InOrbitIcon />
-          <span className="text-lg font-semibold">5 a 10 de Agosto</span>
+          <span className="text-lg font-semibold">
+            {firstDayOfWeek} - {lastDayOfWeek}
+          </span>
         </div>
 
         <DialogTrigger asChild>
@@ -24,16 +42,18 @@ export const Summary = () => {
       </div>
 
       <div className="flex flex-col gap-3">
-        <Progress value={8} max={15}>
-          <ProgressIndicator style={{ width: 200 }} />
+        <Progress value={data?.completed} max={data?.total}>
+          <ProgressIndicator style={{ width: `${completedPercentage}%` }} />
         </Progress>
 
         <div className="flex items-center justify-between text-xs text-zinc-400">
           <span>
-            Você completou <span className="text-zinc-200">8</span> de{' '}
-            <span className="text-zinc-200">15</span> metas nessa semana.
+            Você completou{' '}
+            <span className="text-zinc-200">{data?.completed}</span> de{' '}
+            <span className="text-zinc-200">{data?.total}</span> metas nessa
+            semana.
           </span>
-          <span>58%</span>
+          <span>{completedPercentage}%</span>
         </div>
 
         <Separator />
@@ -60,23 +80,35 @@ export const Summary = () => {
         <div className="flex flex-col gap-6">
           <h2 className="text-xl font-medium">Sua semana</h2>
 
-          <div className="flex flex-col gap-4">
-            <h3 className="font-medium">
-              Domingo{' '}
-              <span className="text-zinc-400 text-xs">(10 de agosto)</span>
-            </h3>
+          {Object.entries(data.goalsPerDay).map(([date, goals]) => {
+            const weekDay = dayjs(date).format('dddd');
+            const parsedDate = dayjs(date).format('D MMMM');
 
-            <ul className="flex flex-col gap-3">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-pink-500" />
-                <span className="text-sm text-zinc-400">
-                  Você completou "
-                  <span className="text-zinc-100">Acordar cedo</span>" às{' '}
-                  <span className="text-zinc-100">08:13h</span>
-                </span>
-              </li>
-            </ul>
-          </div>
+            return (
+              <div key={date} className="flex flex-col gap-4">
+                <h3 className="font-medium">
+                  {weekDay}{' '}
+                  <span className="text-zinc-400 text-xs">{parsedDate}</span>
+                </h3>
+
+                <ul className="flex flex-col gap-3">
+                  {goals.map((goal) => {
+                    const time = dayjs(goal.completedAt).format('HH:mm');
+                    return (
+                      <li key={goal.id} className="flex items-center gap-2">
+                        <CheckCircle2 className="size-4 text-pink-500" />
+                        <span className="text-sm text-zinc-400">
+                          Você completou "
+                          <span className="text-zinc-100">{goal.title}</span>"
+                          às <span className="text-zinc-100">{time}h</span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
